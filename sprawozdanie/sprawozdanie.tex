@@ -73,18 +73,18 @@ caption={3. wersja kodu},
 label=1. funkcja,
 firstnumber=1]
 template <int BLOCK_SIZE> __global__ void
-matrixMul3(float *C, float *A, float *B, int wA, int wB ) {
+matrixMul3(float *C, float *A, float *B, int width) {
     int bx = blockIdx.x;
     int by = blockIdx.y;
     
     int tx = threadIdx.x;
     int ty = threadIdx.y;
     
-    int aBegin = wA * BLOCK_SIZE * by;
-    int aEnd   = aBegin + wA - 1;
+    int aBegin = width * BLOCK_SIZE * by;
+    int aEnd   = aBegin + width - 1;
     int aStep  = BLOCK_SIZE;
     int bBegin = BLOCK_SIZE * bx;
-    int bStep  = BLOCK_SIZE * wB;
+    int bStep  = BLOCK_SIZE * width;
     
     float Csub = 0;
 
@@ -94,8 +94,8 @@ matrixMul3(float *C, float *A, float *B, int wA, int wB ) {
     for (int a = aBegin, b = bBegin; 
     	 a <= aEnd;
     	 a += aStep, b += bStep) {
-        As[ty][tx] = A[a + wA * ty + tx];
-        Bs[ty][tx] = B[b + wB * ty + tx];
+        As[ty][tx] = A[a + width * ty + tx];
+        Bs[ty][tx] = B[b + width * ty + tx];
         
         __syncthreads();
         
@@ -107,18 +107,18 @@ matrixMul3(float *C, float *A, float *B, int wA, int wB ) {
         __syncthreads();
     }
     
-    int c = wB * BLOCK_SIZE * by + BLOCK_SIZE * bx;
-    C[c + wB * ty + tx] = Csub;    
+    int c = width * BLOCK_SIZE * by + BLOCK_SIZE * bx;
+    C[c + width * ty + tx] = Csub;    
 }
 \end{lstlisting}
 
-Argumentami powyższej funkcji są wskaźniki na tablice $A$ i $B$ oraz ich iloczyn $C$. Dwie pozostałe wartości $wA$ i $wB$ oznaczają szerokość macierzy odpowiednio $A$ i $B$. W prezentowanych przez nas przypadkach wartości te będą sobie równe.
+Funkcja ma za zadanie wyznaczenie jednej wartości macierzy $C$ przez jeden wątek. Argumentami powyższej funkcji są wskaźniki na tablice $A$, $B$ i $C$, oraz wartość $width$, która oznacza wielkość każdego wymiaru każdej macierzy.
 
-Pierwszą czynnością, która wykonuje powyższa funkcja jest deklaracja zmiennych: najpierw w 3. i 4. linii kodu wyznaczany jest indeks bloku wątków, następnie w 6. i 7. indeks wątku, a w kolejnych liniach wyznaczane są adresy macierzy $A$ i $B$ potrzebne do obliczeń. W 15. linii tworzymy zmienną $Csub$, która posłuży nam do obliczenia wartości kolejnych komórek macierzy wynikowej $C$. W linii 17. i 18. deklarowana jest pamięć współdzielona dla obu macierzy.
+Pierwszą czynnością, która wykonuje powyższa funkcja jest wyznaczenie numeru bloku w 3. i 4. linii kodu, następnie w 6. i 7. wyznaczane jest położenie wątku wewnątrz tego bloku. W kolejnych liniach wyznaczane są adresy macierzy $A$ i $B$ potrzebne do obliczeń. W 15. linii tworzymy zmienną lokalną $Csub$, która posłuży nam do obliczenia wartości kolejnych komórek macierzy wynikowej $C$. W linii 17. i 18. deklarowana jest pamięć współdzielona dla obu macierzy.
 
-W pętli najpierw następuje przekopiowanie po 1 wartości z obu macierzy do odpowiadających pamięci współdzielonych, a zaraz po tym następuje ich synchronizacja (linie 23-26). Synchronizacja zapewnia nas o tym, że do w pamięci współdzielonej przypisane zostały wszystkie wymagane elementy. Dyrektywa $\#pragma unroll$ posłuży do odwinięcia ciała pętli (linie 29-31) w szereg pojedynczych instrukcji, które posłużą do wyliczenia częściowego wyniku wykorzystując dane w pamięci współdzielonej. Następnie ponownie następuje synchronizacja wątków w bloku, która zapobiegnie nadpisaniu pamięci współdzielonej.
+W pętli funkcja kopiuje wartości z obu macierzy do pamięci współdzielonej, a zaraz po tym następuje synchronizacja wątków (linie 23-26), która zapewnia nas o tym, że do pamięci współdzielonej przypisane zostały wszystkie wymagane elementy. Dyrektywa $\#pragma\ unroll$ posłuży do odwinięcia ciała pętli (linie 29-31) w szereg pojedynczych instrukcji, których zadaniem jest wyliczenie częściowego wyniku wykorzystując dane z pamięci współdzielonej. Następnie ponownie następuje synchronizacja, która zapobiegnie nadpisaniu tej pamięci.
 
-Po uzyskaniu wyniku częściowego funkcja zapisze go ponownie w pamięci głównej w tablicy $C$. Czynność ta zostaje wykonana w 37. linii kodu.
+Po uzyskaniu wyniku częściowego funkcja zapisze go, już poza pętlą w 37. linii kodu, do pamięci głównej w odpowiedniej komórce macierzy $C$.
 
 \begin{figure}[H]
 	\centering
@@ -144,7 +144,7 @@ Dyrektywy OpenMP w 2. i 3. wierszu wykorzystano do uruchomienia kodu na wielu w�
 \begin{lstlisting}[
 caption={5. wersja kodu},
 label=2. funkcja,
-firstnumber=9]
+firstnumber=39]
 template <int BLOCK_SIZE> __global__ void
 matrixMul3(float *C, float *A, float *B, int wA, int wB ) {
     int bx = blockIdx.x;
