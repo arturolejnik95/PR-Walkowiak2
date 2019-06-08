@@ -37,7 +37,7 @@
 #include <helper_functions.h>
 
 template <int BLOCK_SIZE> __global__ void
-matrixMul3(float *C, float *A, float *B, int wA, int wB)
+matrixMul3(float *C, float *A, float *B, int width)
 {
     // Block index
     int bx = blockIdx.x;
@@ -48,10 +48,10 @@ matrixMul3(float *C, float *A, float *B, int wA, int wB)
     int ty = threadIdx.y;
 
     // Index of the first sub-matrix of A processed by the block
-    int aBegin = wA * BLOCK_SIZE * by;
+    int aBegin = width * BLOCK_SIZE * by;
 
     // Index of the last sub-matrix of A processed by the block
-    int aEnd   = aBegin + wA - 1;
+    int aEnd   = aBegin + width - 1;
 
     // Step size used to iterate through the sub-matrices of A
     int aStep  = BLOCK_SIZE;
@@ -60,7 +60,7 @@ matrixMul3(float *C, float *A, float *B, int wA, int wB)
     int bBegin = BLOCK_SIZE * bx;
 
     // Step size used to iterate through the sub-matrices of B
-    int bStep  = BLOCK_SIZE * wB;
+    int bStep  = BLOCK_SIZE * width;
 
     // Csub is used to store the element of the block sub-matrix
     // that is computed by the thread
@@ -83,8 +83,8 @@ matrixMul3(float *C, float *A, float *B, int wA, int wB)
         // Load the matrices from device memory
         // to shared memory; each thread loads
         // one element of each matrix
-        As[ty][tx] = A[a + wA * ty + tx];
-        Bs[ty][tx] = B[b + wB * ty + tx];
+        As[ty][tx] = A[a + width * ty + tx];
+        Bs[ty][tx] = B[b + width * ty + tx];
 
         // Synchronize to make sure the matrices are loaded
         __syncthreads();
@@ -107,8 +107,8 @@ matrixMul3(float *C, float *A, float *B, int wA, int wB)
 
     // Write the block sub-matrix to device memory;
     // each thread writes one element
-    int c = wB * BLOCK_SIZE * by + BLOCK_SIZE * bx;
-    C[c + wB * ty + tx] = Csub;    
+    int c = width * BLOCK_SIZE * by + BLOCK_SIZE * bx;
+    C[c + width * ty + tx] = Csub;    
 }
 
 /**
