@@ -66,22 +66,59 @@ Do wykonania pomiarów wykorzystano program CodeXL. Testy zrealizowano na jednos
 
 \section{Analiza algorytmu}
 \subsection{Kluczowe fragmenty kodu}
-\subsubsection{3 pętle -- kolejność pętli: jik, podział pracy przed pętlą 1}
+\subsubsection{Algorytm dla 3. wersji kodu}
+Grid wieloblokowy, obliczenia przy wykorzystaniu pamięci współdzielonej bloku wątków:
 \begin{lstlisting}[
-caption={3 pętle -- jik},
+caption={3. wersja kodu},
 label=1. funkcja,
 firstnumber=1]
-void multiply_matrices_JIK() {
-#pragma omp parallel
-#pragma omp for 
- for (int j = 0; j < ROWS; j++){
-  for (int i = 0; i < ROWS; i++){
-   for (int k = 0; k < ROWS; k++){
-    matrix_r[i][j] += matrix_a[i][k] * matrix_b[k][j];
-   }}}}
+template <int BLOCK_SIZE> __global__ void
+matrixMul3(float *C, float *A, float *B, int wA, int wB ) {
+    int bx = blockIdx.x;
+    int by = blockIdx.y;
+    
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
+    
+    int aBegin = wA * BLOCK_SIZE * by;
+    int aEnd   = aBegin + wA - 1;
+    int aStep  = BLOCK_SIZE;
+    int bBegin = BLOCK_SIZE * bx;
+    int bStep  = BLOCK_SIZE * wB;
+    
+    float Csub = 0;
+
+    __shared__ float As[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ float Bs[BLOCK_SIZE][BLOCK_SIZE];
+
+    for (int a = aBegin, b = bBegin; 
+    	 a <= aEnd;
+    	 a += aStep, b += bStep) {
+        As[ty][tx] = A[a + wA * ty + tx];
+        Bs[ty][tx] = B[b + wB * ty + tx];
+        
+        __syncthreads();
+        
+#pragma unroll
+        for (int k = 0; k < BLOCK_SIZE; ++k) {
+            Csub += As[ty][k] * Bs[k][tx];
+        }
+
+        __syncthreads();
+    }
+    
+    int c = wB * BLOCK_SIZE * by + BLOCK_SIZE * bx;
+    C[c + wB * ty + tx] = Csub;    
+}
 \end{lstlisting}
 
-W powyższej funkcji pętla w 6. wierszu iteruje po kolumnach macierzy $A$ i po wierszach macierzy $B$. Iloczyn tych dwóch elementów jest dodawany do pojedynczego elementu macierzy $R$ znajdującego się w $i$-tym wierszu i $j$-tej kolumnie, które są wyznaczane w pętlach odpowiednio 5. i 4. wierszu. Złożoność algorytmu wynosi $O(n^3)$.
+Argumentami powyższej funkcji są wskaźniki na tablice $A$ i $B$ oraz ich iloczyn $C$. Dwie pozostałe wartości $wA$ i $wB$ oznaczają szerokość macierzy odpowiednio $A$ i $B$. W prezentowanych przez nas przypadkach wartości te będą sobie równe.
+
+Pierwszą czynnością, która wykonuje powyższa funkcja jest deklaracja zmiennych: najpierw w 3. i 4. linii kodu wyznaczany jest indeks bloku wątków, następnie w 6. i 7. indeks wątku, a w kolejnych liniach wyznaczane są adresy macierzy $A$ i $B$ potrzebne do obliczeń. W 15. linii tworzymy zmienną $Csub$, która posłuży nam do obliczenia wartości kolejnych komórek macierzy wynikowej $C$. W linii 17. i 18. deklarowana jest pamięć współdzielona dla obu macierzy.
+
+W pętli najpierw następuje przekopiowanie po 1 wartości z obu macierzy do odpowiadających pamięci współdzielonych, a zaraz po tym następuje ich synchronizacja (linie 23-26). Synchronizacja zapewnia nas o tym, że do w pamięci współdzielonej przypisane zostały wszystkie wymagane elementy. Dyrektywa $\#pragma unroll$ posłuży do odwinięcia ciała pętli (linie 29-31) w szereg pojedynczych instrukcji, które posłużą do wyliczenia częściowego wyniku wykorzystując dane w pamięci współdzielonej. Następnie ponownie następuje synchronizacja wątków w bloku, która zapobiegnie nadpisaniu pamięci współdzielonej.
+
+Po uzyskaniu wyniku częściowego funkcja zapisze go ponownie w pamięci głównej w tablicy $C$. Czynność ta zostaje wykonana w 37. linii kodu.
 
 \begin{figure}[H]
 	\centering
@@ -103,22 +140,50 @@ Drugi rysunek ilustruje wykorzystanie danych do zrealizowania pętli w 5. wiersz
 
 Dyrektywy OpenMP w 2. i 3. wierszu wykorzystano do uruchomienia kodu na wielu wątkach oraz podzielenia przetwarzania pętli między nimi. Kolejne iteracje pętli w 4. wierszu zostaną przydzielone równomiernie między wątki. Spowoduje to, że kolumny macierzy $B$ i macierzy wynikowej $R$ nie będą się powtarzały w kolejnych wątkach.
 
-\subsubsection{6 pętli -- kolejność pętli: zewnętrznych ijk, wewnętrznych: ii,kk,jj, podział pracy przed pętlą 2.}
+\subsubsection{Algorytm dla 5. wersji kodu}
 \begin{lstlisting}[
-caption={6 pętli -- zewnętrzne ijk, wewnętrzne ii,kk,jj},
+caption={5. wersja kodu},
 label=2. funkcja,
 firstnumber=9]
-void multiply_matrices_6(int r){
-#pragma omp parallel
- for (int i = 0; i < ROWS; i += r) {
-#pragma omp for
-  for (int j = 0; j < ROWS; j += r) {
-   for (int k = 0; k < ROWS; k += r) {
-    for (int ii = i; ii < i + r; ii++) {
-     for (int kk = k; kk < k + r; kk++) {
-      for (int jj = j; jj < j + r; jj++) {
-       matrix_r[ii][jj] += matrix_a[ii][kk] * matrix_b[kk][jj];
-      }}}}}}}
+template <int BLOCK_SIZE> __global__ void
+matrixMul3(float *C, float *A, float *B, int wA, int wB ) {
+    int bx = blockIdx.x;
+    int by = blockIdx.y;
+    
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
+    
+    int aBegin = wA * BLOCK_SIZE * by;
+    int aEnd   = aBegin + wA - 1;
+    int aStep  = BLOCK_SIZE;
+    int bBegin = BLOCK_SIZE * bx;
+    int bStep  = BLOCK_SIZE * wB;
+    
+    float Csub = 0;
+
+    __shared__ float As[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ float Bs[BLOCK_SIZE][BLOCK_SIZE];
+
+    for (int a = aBegin, b = bBegin; 
+    	 a <= aEnd;
+    	 a += aStep, b += bStep) {
+        As[ty][tx] = A[a + wA * ty + tx];
+        Bs[ty][tx] = B[b + wB * ty + tx];
+        
+        __syncthreads();
+        
+#pragma unroll
+
+        for (int k = 0; k < BLOCK_SIZE; ++k) {
+            Csub += As[ty][k] * Bs[k][tx];
+        }
+
+        __syncthreads();
+    }
+    
+    int c = wB * BLOCK_SIZE * by + BLOCK_SIZE * bx;
+    C[c + wB * ty + tx] = Csub;    
+}
 \end{lstlisting}
 
 Druga funkcja jest bardziej złożona. Wydaje się, że 3 wewnętrzne pętle działają podobnie do pętli w poprzedniej funkcji pracując tylko dla określonego fragmentu każdej z macierzy (wielkość tego obszaru jest określona w argumencie $r$). W rzeczywistości działanie tych 3 pętli odbiega trochę od tego, co obserwowaliśmy przy okazji analizy poprzedniej funkcji. Jest to spowodowane inną kolejnością odpowiadających pętli (w pierwszej funkcji kolejność jik, w drugiej ii,kk,jj).
