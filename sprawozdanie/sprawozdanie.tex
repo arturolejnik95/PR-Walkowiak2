@@ -116,29 +116,9 @@ Funkcja ma za zadanie wyznaczenie jednej wartości macierzy $C$ przez jeden wąt
 
 Pierwszą czynnością, która wykonuje powyższa funkcja jest wyznaczenie numeru bloku w 3. i 4. linii kodu, następnie w 6. i 7. wyznaczane jest położenie wątku wewnątrz tego bloku. W kolejnych liniach wyznaczane są adresy macierzy $A$ i $B$ potrzebne do obliczeń. W 15. linii tworzymy zmienną lokalną $Csub$, która posłuży nam do obliczenia wartości kolejnych komórek macierzy wynikowej $C$. W linii 17. i 18. deklarowana jest pamięć współdzielona dla obu macierzy.
 
-W pętli funkcja kopiuje wartości z obu macierzy do pamięci współdzielonej, a zaraz po tym następuje synchronizacja wątków (linie 23-26), która zapewnia nas o tym, że do pamięci współdzielonej przypisane zostały wszystkie wymagane elementy. Dyrektywa $\#pragma\ unroll$ posłuży do odwinięcia ciała pętli (linie 29-31) w szereg pojedynczych instrukcji, których zadaniem jest wyliczenie częściowego wyniku wykorzystując dane z pamięci współdzielonej. Następnie ponownie następuje synchronizacja, która zapobiegnie nadpisaniu tej pamięci.
+W pętli funkcja kopiuje wartości z obu macierzy do pamięci współdzielonej, a zaraz po tym następuje synchronizacja wątków w obrębie bloku (linie 23-26), która zapewnia nas o tym, że do pamięci współdzielonej przypisane zostały wszystkie wymagane elementy. Dyrektywa $\#pragma\ unroll$ posłuży do odwinięcia ciała pętli (linie 29-31) w szereg pojedynczych instrukcji, których zadaniem jest wyliczenie częściowego wyniku wykorzystując dane z pamięci współdzielonej. Następnie ponownie występuje bariera synchroniczna, która zapobiegnie nadpisaniu tej pamięci.
 
 Po uzyskaniu wyniku częściowego funkcja zapisze go, już poza pętlą w 37. linii kodu, do pamięci głównej w odpowiedniej komórce macierzy $C$.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\linewidth]{./images/3/lokIn.png}
-	\caption{Zasoby wykorzystywane w pętli wewnętrznej}
-	\label{fig:3inner}
-\end{figure}
-
-Powyższy rysunek przedstawia dokładnie, które dane są wykorzystywane do przetworzenia pętli w 6. linii kodu. Jak widać do wykonania jednej iteracji pętli wewnętrznej potrzebne jest odczytanie jednego wiersza macierzy $A$ i jednej kolumny macierzy $B$. Rezultatem tej pętli będzie odczytanie jednej wartości macierzy wynikowej $R$.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\linewidth]{./images/3/lokMed.png}
-	\caption{Zasoby wykorzystywane w pętli środkowej}
-	\label{fig:3medium}
-\end{figure}
-
-Drugi rysunek ilustruje wykorzystanie danych do zrealizowania pętli w 5. wierszu. W tym przypadku potrzeba już wszystkich danych z macierzy $A$ i, tak jak w przypadku samej pętli wewnętrznej, jednej kolumny macierzy $B$. Otrzymujemy całą kolumnę macierzy wynikowej $R$. Wykonanie pętli zewnętrznej pozwoli na uzyskanie wartości wszystkich kolumn macierzy $R$ i będzie wymagało wszystkich danych z macierzy $A$ i $B$.
-
-Dyrektywy OpenMP w 2. i 3. wierszu wykorzystano do uruchomienia kodu na wielu wątkach oraz podzielenia przetwarzania pętli między nimi. Kolejne iteracje pętli w 4. wierszu zostaną przydzielone równomiernie między wątki. Spowoduje to, że kolumny macierzy $B$ i macierzy wynikowej $R$ nie będą się powtarzały w kolejnych wątkach.
 
 \subsubsection{Algorytm dla 5. wersji kodu}
 \begin{lstlisting}[
@@ -186,7 +166,7 @@ matrixMul3(float *C, float *A, float *B, int wA, int wB ) {
 }
 \end{lstlisting}
 
-Druga funkcja jest bardziej złożona. Wydaje się, że 3 wewnętrzne pętle działają podobnie do pętli w poprzedniej funkcji pracując tylko dla określonego fragmentu każdej z macierzy (wielkość tego obszaru jest określona w argumencie $r$). W rzeczywistości działanie tych 3 pętli odbiega trochę od tego, co obserwowaliśmy przy okazji analizy poprzedniej funkcji. Jest to spowodowane inną kolejnością odpowiadających pętli (w pierwszej funkcji kolejność jik, w drugiej ii,kk,jj).
+Powyższa funkcja jest zmodyfikowaną wersją poprzedniej. Jej zadaniem jest również wykorzystanie pamięci współdzielonej bloku wątków. Różnica polega na dodatkowej funkcjonalności, którą jest zrównoleglenie obliczeń i transferu danych pomiędzy CPU i GPU.
 
 \begin{figure}[H]
 	\centering

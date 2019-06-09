@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6700 64-bit) (preloaded format=pdflatex 2018.5.27)  8 JUN 2019 23:34
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6700 64-bit) (preloaded format=pdflatex 2018.5.27)  9 JUN 2019 03:24
 entering extended mode
 **./sprawozdanie.tex
 (sprawozdanie.tex
@@ -406,108 +406,100 @@ LaTeX Font Info:    External font `plex10' loaded for size
 (Font)              <5> on input line 84.
 
 [2]
-<./images/3/lokIn.png, id=16, 697.8572pt x 225.09094pt>
-File: ./images/3/lokIn.png Graphic file (type png)
-<use ./images/3/lokIn.png>
-Package pdftex.def Info: ./images/3/lokIn.png  used on input line 125.
-(pdftex.def)             Requested size: 345.0pt x 111.27782pt.
- [3]
-<./images/3/lokMed.png, id=22, 697.8572pt x 225.09094pt>
-File: ./images/3/lokMed.png Graphic file (type png)
-<use ./images/3/lokMed.png>
-Package pdftex.def Info: ./images/3/lokMed.png  used on input line 134.
-(pdftex.def)             Requested size: 345.0pt x 111.27782pt.
-
-Overfull \hbox (9.0036pt too wide) in paragraph at lines 149--150
+Overfull \hbox (9.0036pt too wide) in paragraph at lines 129--130
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
-[4 <./images/3/lokIn.png> <./images/3/lokMed.png>]
-<./images/6/lokIn1.png, id=28, 697.8572pt x 225.09094pt>
+[3]
+<./images/6/lokIn1.png, id=20, 697.8572pt x 225.09094pt>
 File: ./images/6/lokIn1.png Graphic file (type png)
 <use ./images/6/lokIn1.png>
-Package pdftex.def Info: ./images/6/lokIn1.png  used on input line 193.
+Package pdftex.def Info: ./images/6/lokIn1.png  used on input line 173.
 (pdftex.def)             Requested size: 345.0pt x 111.27782pt.
- [5]
-<./images/6/lokIn2.png, id=32, 697.8572pt x 225.09094pt>
+ [4]
+<./images/6/lokIn2.png, id=25, 697.8572pt x 225.09094pt>
 File: ./images/6/lokIn2.png Graphic file (type png)
 <use ./images/6/lokIn2.png>
-Package pdftex.def Info: ./images/6/lokIn2.png  used on input line 200.
+Package pdftex.def Info: ./images/6/lokIn2.png  used on input line 180.
 (pdftex.def)             Requested size: 345.0pt x 111.27782pt.
-<./images/6/lokIn3.png, id=33, 697.8572pt x 225.09094pt>
+<./images/6/lokIn3.png, id=26, 697.8572pt x 225.09094pt>
 File: ./images/6/lokIn3.png Graphic file (type png)
 <use ./images/6/lokIn3.png>
-Package pdftex.def Info: ./images/6/lokIn3.png  used on input line 207.
+Package pdftex.def Info: ./images/6/lokIn3.png  used on input line 187.
 (pdftex.def)             Requested size: 345.0pt x 111.27782pt.
- [6 <./images/6/lokIn1.png> <./images/6/lokIn2.png> <./images/6/lokIn3.png>]
-<./images/6/lokMed.png, id=40, 697.8572pt x 225.09094pt>
+ [5 <./images/6/lokIn1.png> <./images/6/lokIn2.png> <./images/6/lokIn3.png>]
+<./images/6/lokMed.png, id=33, 697.8572pt x 225.09094pt>
 File: ./images/6/lokMed.png Graphic file (type png)
 <use ./images/6/lokMed.png>
-Package pdftex.def Info: ./images/6/lokMed.png  used on input line 216.
+Package pdftex.def Info: ./images/6/lokMed.png  used on input line 196.
 (pdftex.def)             Requested size: 345.0pt x 111.27782pt.
-<./images/6/lokOut1.png, id=41, 697.8572pt x 225.09094pt>
+<./images/6/lokOut1.png, id=34, 697.8572pt x 225.09094pt>
 File: ./images/6/lokOut1.png Graphic file (type png)
 <use ./images/6/lokOut1.png>
-Package pdftex.def Info: ./images/6/lokOut1.png  used on input line 225.
+Package pdftex.def Info: ./images/6/lokOut1.png  used on input line 205.
 (pdftex.def)             Requested size: 345.0pt x 111.27782pt.
- [7 <./images/6/lokMed.png> <./images/6/lokOut1.png>] [8] [9]
-<./images/wykresy/IPC.png, id=57, 430.2474pt x 277.5168pt>
+ [6 <./images/6/lokMed.png> <./images/6/lokOut1.png>] [7] [8]
+<./images/wykresy/IPC.png, id=50, 430.2474pt x 277.5168pt>
 File: ./images/wykresy/IPC.png Graphic file (type png)
 <use ./images/wykresy/IPC.png>
-Package pdftex.def Info: ./images/wykresy/IPC.png  used on input line 315.
+Package pdftex.def Info: ./images/wykresy/IPC.png  used on input line 295.
 (pdftex.def)             Requested size: 345.0pt x 222.54305pt.
- [10]
-<./images/wykresy/miss_ratio.png, id=61, 423.984pt x 262.581pt>
+ [9]
+<./images/wykresy/miss_ratio.png, id=54, 423.984pt x 262.581pt>
 File: ./images/wykresy/miss_ratio.png Graphic file (type png)
 <use ./images/wykresy/miss_ratio.png>
-Package pdftex.def Info: ./images/wykresy/miss_ratio.png  used on input line 32
+Package pdftex.def Info: ./images/wykresy/miss_ratio.png  used on input line 30
 5.
 (pdftex.def)             Requested size: 345.0pt x 213.67105pt.
- [11 <./images/wykresy/IPC.png>]
-<./images/wykresy/miss_rate.png, id=66, 424.4658pt x 262.0992pt>
+ [10 <./images/wykresy/IPC.png>]
+<./images/wykresy/miss_rate.png, id=59, 424.4658pt x 262.0992pt>
 File: ./images/wykresy/miss_rate.png Graphic file (type png)
 <use ./images/wykresy/miss_rate.png>
-Package pdftex.def Info: ./images/wykresy/miss_rate.png  used on input line 335
+Package pdftex.def Info: ./images/wykresy/miss_rate.png  used on input line 315
 .
 (pdftex.def)             Requested size: 345.0pt x 213.04305pt.
- [12 <./images/wykresy/miss_ratio.png>]
-<./images/wykresy/analiza_przyspieszenia.png, id=71, 364.2408pt x 220.6644pt>
+ [11 <./images/wykresy/miss_ratio.png>]
+<./images/wykresy/analiza_przyspieszenia.png, id=64, 364.2408pt x 220.6644pt>
 File: ./images/wykresy/analiza_przyspieszenia.png Graphic file (type png)
 <use ./images/wykresy/analiza_przyspieszenia.png>
 Package pdftex.def Info: ./images/wykresy/analiza_przyspieszenia.png  used on i
-nput line 346.
+nput line 326.
 (pdftex.def)             Requested size: 345.0pt x 209.01717pt.
- [13 <./images/wykresy/miss_rate.png>] [14 <./images/wykresy/analiza_przyspiesz
-enia.png>] (sprawozdanie.aux) ) 
+ [12 <./images/wykresy/miss_rate.png>] [13 <./images/wykresy/analiza_przyspiesz
+enia.png>]
+(sprawozdanie.aux)
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
 Here is how much of TeX's memory you used:
- 4758 strings out of 492976
- 68736 string characters out of 3126751
- 336382 words of memory out of 3000000
- 8535 multiletter control sequences out of 15000+200000
+ 4748 strings out of 492976
+ 68510 string characters out of 3126751
+ 332382 words of memory out of 3000000
+ 8527 multiletter control sequences out of 15000+200000
  14275 words of font info for 40 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
  41i,6n,58p,988b,1676s stack positions out of 5000i,500n,10000p,200000b,50000s
-{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.
-9/fonts/enc/dvips/pl/plme.enc}{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9
-/fonts/enc/dvips/pl/plrm.enc}{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/
-fonts/enc/dvips/pl/plmi.enc}{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/f
-onts/enc/dvips/pl/plms.enc}<C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fo
-nts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/Artur/AppData/Local/Programs/
-MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Artur/AppData/Lo
-cal/Programs/MiKTeX 2.9/fonts/type1/public/pl/plbx10.pfb><C:/Users/Artur/AppDat
-a/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/plbx12.pfb><C:/Users/Artur/Ap
-pData/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/plex10.pfb><C:/Users/Artu
-r/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/plmi10.pfb><C:/Users/
-Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/plmi7.pfb><C:/Use
-rs/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/plr10.pfb><C:/
-Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/plr12.pfb><
-C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/plr17.pf
-b><C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/plr7.
-pfb><C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/pls
-y10.pfb>
-Output written on sprawozdanie.pdf (14 pages, 201306 bytes).
+{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvips/pl/plme.enc
+}{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvips/pl/plrm.enc}
+{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvips/pl/plmi.enc}{
+C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvips/pl/plms.enc}<C
+:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/
+cmmi10.pfb><C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public
+/amsfonts/cm/cmsy10.pfb><C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts
+/type1/public/pl/plbx10.pfb><C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/f
+onts/type1/public/pl/plbx12.pfb><C:/Users/Artur/AppData/Local/Programs/MiKTeX 2
+.9/fonts/type1/public/pl/plex10.pfb><C:/Users/Artur/AppData/Local/Programs/MiKT
+eX 2.9/fonts/type1/public/pl/plmi10.pfb><C:/Users/Artur/AppData/Local/Programs/
+MiKTeX 2.9/fonts/type1/public/pl/plmi7.pfb><C:/Users/Artur/AppData/Local/Progra
+ms/MiKTeX 2.9/fonts/type1/public/pl/plr10.pfb><C:/Users/Artur/AppData/Local/Pro
+grams/MiKTeX 2.9/fonts/type1/public/pl/plr12.pfb><C:/Users/Artur/AppData/Local/
+Programs/MiKTeX 2.9/fonts/type1/public/pl/plr17.pfb><C:/Users/Artur/AppData/Loc
+al/Programs/MiKTeX 2.9/fonts/type1/public/pl/plr7.pfb><C:/Users/Artur/AppData/L
+ocal/Programs/MiKTeX 2.9/fonts/type1/public/pl/plsy10.pfb>
+Output written on sprawozdanie.pdf (13 pages, 189967 bytes).
 PDF statistics:
- 123 PDF objects out of 1000 (max. 8388607)
+ 116 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 56 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 46 words of extra memory for PDF output out of 10000 (max. 10000000)
 
