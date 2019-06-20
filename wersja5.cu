@@ -29,7 +29,7 @@ __global__ void matrixMulCUDA(float *C, float *A, float *B) {
     B_shared[ty][tx] = B[bBegin + MATRIX_SIZE * ty + tx];
 
     for (int a = aBegin, b = bBegin; a <= aEnd; a += aStep, b += bStep) {
-        //Pobieranie danych
+        
         As[ty][tx] = A_shared[ty][tx];
         Bs[ty][tx] = B_shared[ty][tx];
 
