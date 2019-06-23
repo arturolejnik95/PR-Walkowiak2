@@ -36,19 +36,21 @@ __global__ void matrixMulCUDA(float *C, float *A, float *B) {
 
         __syncthreads();
 
+        //Pobranie danych do pamięci współdzielonej wątków (potrzebne do następnej iteracji)
         A_shared[ty][tx] = A[a + MATRIX_SIZE * ty + tx];
         B_shared[ty][tx] = B[b + MATRIX_SIZE * ty + tx];
 
 #pragma unroll
         for (int k = 0; k < BLOCK_SIZE; ++k) {
             //Kolumna razy wiersz
+            //Obliczanie wyniku częściowego
             C_local += As[ty][k] * Bs[k][tx];
         }
 
         __syncthreads();
         
     }
-
+    //Zapis wyników do pamięci
     int c = MATRIX_SIZE * BLOCK_SIZE * by + BLOCK_SIZE * bx;
     C[c + MATRIX_SIZE * ty + tx] = C_local;
 }
