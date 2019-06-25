@@ -351,6 +351,8 @@ Współczynnik poziomu rozbieżności przetwarzania wynosi:
 Współczynnik poziomu rozbieżności przetwarzania wiązek w kodzie to liczba gałęzi rozbierznych które powstają w kodzie przy instrukcjach warunkowych. Wówczas wiązka musi przetwarzać różne wersje kodu co bardzo źle wpływa na efektywność przetwarzania. Jeżeli wszystkie wątki wybiorą tę samą wersję rozwiazania instrukcji warunkowej, to nie będzie gałęzi rozbierznych. Obie wersje kodu które testujemy nie posiadają instrukcji warunkowych, dlatego zgodnie z oczekiwaniami wartość ta, jest zawsze równa 1.
 
 \section{Wnioski końcowe}
-Zrównoleglenie obliczeń nie wpłynęło w pozytywnie na działanie algorytmu.
+Tematem naszego zadania było porównanie metod równoległego mnożenia macierzy z ukryciem czasów dostępów do pamięci i bez. Nasz eksperyment nie wykazał znaczącej róznicy między obiema wersjami. Warto jednak zauważyć, że znaczyny wpływ na jakość przetwarzania ma wielkość bloku wątków. Dla analizowanych przez nas wielkości (8, 16 i 32) można zauważyć, że zwiększenie rozmiru bloku powoduje zwiększenie prędkości przetwarzania. Również rozmiar instancji ma wpływ na ilość przetwarzanych danych na sekundę. Tutaj również dla analizowanych przez nas wielkości (64x64, 128x128 oraz 256x256) można zauważyć wzrost liczby przetworzonych danych na sekundę w wypadku zwiększającej się wielkości macierzy.
+
+Analizując postęp technologiczny z ostatnich klikudziesięciu lat, można zauważyć, że wydajność pojedynczego rdzenia coraz wolniej się zwiększa. Jednak poprzez wykorzystanie odpowiednich technik zrównoleglania zadań, można zapewnić stały wzrost efektywnoći oprogramowania.
 
 \end{document}

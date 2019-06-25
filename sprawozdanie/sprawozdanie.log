@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6700 64-bit) (preloaded format=pdflatex 2018.5.27)  25 JUN 2019 04:15
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6700 64-bit) (preloaded format=pdflatex 2018.5.27)  25 JUN 2019 12:48
 entering extended mode
 **./sprawozdanie.tex
 (sprawozdanie.tex
@@ -516,12 +516,8 @@ File: ./images/tables/table3.png Graphic file (type png)
 <use ./images/tables/table3.png>
 Package pdftex.def Info: ./images/tables/table3.png  used on input line 340.
 (pdftex.def)             Requested size: 345.0pt x 193.87756pt.
- [16 <./images/tables/table2.png>] [17 <./images/tables/table3.png>] (sprawozda
-nie.aux)
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
- ) 
+ [16 <./images/tables/table2.png>] [17 <./images/tables/table3.png>] [18] (spra
+wozdanie.aux) ) 
 Here is how much of TeX's memory you used:
  4785 strings out of 492976
  69857 string characters out of 3126751
@@ -529,23 +525,23 @@ Here is how much of TeX's memory you used:
  8562 multiletter control sequences out of 15000+200000
  14275 words of font info for 40 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 41i,6n,58p,771b,1676s stack positions out of 5000i,500n,10000p,200000b,50000s
-{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvips/pl/plmi.enc
-}{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvips/pl/plms.enc}
-{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvips/pl/plrm.enc}<
-C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm
-/cmmi10.pfb><C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/publi
-c/amsfonts/cm/cmsy10.pfb><C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/font
-s/type1/public/pl/plbx10.pfb><C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/
-fonts/type1/public/pl/plbx12.pfb><C:/Users/Artur/AppData/Local/Programs/MiKTeX 
-2.9/fonts/type1/public/pl/plmi10.pfb><C:/Users/Artur/AppData/Local/Programs/MiK
-TeX 2.9/fonts/type1/public/pl/plr10.pfb><C:/Users/Artur/AppData/Local/Programs/
-MiKTeX 2.9/fonts/type1/public/pl/plr12.pfb><C:/Users/Artur/AppData/Local/Progra
-ms/MiKTeX 2.9/fonts/type1/public/pl/plr17.pfb><C:/Users/Artur/AppData/Local/Pro
-grams/MiKTeX 2.9/fonts/type1/public/pl/plsy10.pfb>
-Output written on sprawozdanie.pdf (17 pages, 262320 bytes).
+ 41i,6n,58p,774b,1676s stack positions out of 5000i,500n,10000p,200000b,50000s
+{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvip
+s/pl/plmi.enc}{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvips
+/pl/plms.enc}{C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvips/
+pl/plrm.enc}<C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/publi
+c/amsfonts/cm/cmmi10.pfb><C:/Users/Artur/AppData/Local/Programs/MiKTeX 2.9/font
+s/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Artur/AppData/Local/Programs/Mi
+KTeX 2.9/fonts/type1/public/pl/plbx10.pfb><C:/Users/Artur/AppData/Local/Program
+s/MiKTeX 2.9/fonts/type1/public/pl/plbx12.pfb><C:/Users/Artur/AppData/Local/Pro
+grams/MiKTeX 2.9/fonts/type1/public/pl/plmi10.pfb><C:/Users/Artur/AppData/Local
+/Programs/MiKTeX 2.9/fonts/type1/public/pl/plr10.pfb><C:/Users/Artur/AppData/Lo
+cal/Programs/MiKTeX 2.9/fonts/type1/public/pl/plr12.pfb><C:/Users/Artur/AppData
+/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/plr17.pfb><C:/Users/Artur/AppD
+ata/Local/Programs/MiKTeX 2.9/fonts/type1/public/pl/plsy10.pfb>
+Output written on sprawozdanie.pdf (18 pages, 263590 bytes).
 PDF statistics:
- 114 PDF objects out of 1000 (max. 8388607)
+ 117 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  81 words of extra memory for PDF output out of 10000 (max. 10000000)
 
