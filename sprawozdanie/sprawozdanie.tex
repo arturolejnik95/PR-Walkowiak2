@@ -121,217 +121,236 @@ W pętli funkcja kopiuje wartości z obu macierzy do pamięci współdzielonej, 
 Po uzyskaniu wyniku częściowego funkcja zapisze go, już poza pętlą w 37. linii kodu, do pamięci głównej w odpowiedniej komórce macierzy $C$.
 
 \subsubsection{Algorytm dla 5. wersji kodu}
+Grid wieloblokowy, obliczenia przy wykorzystaniu pamięci współdzielonej bloku wątków, zrównoleglenie obliczeń i transferu danych między pamięciami: operacyjną procesora, a globalną karty:
+
 \begin{lstlisting}[
 caption={5. wersja kodu},
 label=2. funkcja,
 firstnumber=39]
 template <int BLOCK_SIZE> __global__ void
-matrixMul3(float *C, float *A, float *B, int wA, int wB ) {
+matrixMulCUDA(float *C, float *A, float *B, int width) {
     int bx = blockIdx.x;
     int by = blockIdx.y;
     
     int tx = threadIdx.x;
     int ty = threadIdx.y;
-    
-    int aBegin = wA * BLOCK_SIZE * by;
-    int aEnd   = aBegin + wA - 1;
-    int aStep  = BLOCK_SIZE;
-    int bBegin = BLOCK_SIZE * bx;
-    int bStep  = BLOCK_SIZE * wB;
-    
-    float Csub = 0;
 
+    int aBegin = width * BLOCK_SIZE * by;
+    int aEnd = aBegin + width - 1;
+    int aStep = BLOCK_SIZE;
+    int bBegin = BLOCK_SIZE * bx;
+    int bStep = BLOCK_SIZE * width;
+
+    float Csub = 0;
+    
     __shared__ float As[BLOCK_SIZE][BLOCK_SIZE];
     __shared__ float Bs[BLOCK_SIZE][BLOCK_SIZE];
 
-    for (int a = aBegin, b = bBegin; 
-    	 a <= aEnd;
-    	 a += aStep, b += bStep) {
-        As[ty][tx] = A[a + wA * ty + tx];
-        Bs[ty][tx] = B[b + wB * ty + tx];
-        
-        __syncthreads();
-        
-#pragma unroll
+    __shared__ float A_shared[BLOCK_SIZE][BLOCK_SIZE];
+    __shared__ float B_shared[BLOCK_SIZE][BLOCK_SIZE];
 
+    A_shared[ty][tx] = A[aBegin + width * ty + tx];
+    B_shared[ty][tx] = B[bBegin + width * ty + tx];
+
+    for (int a = aBegin, b = bBegin; a <= aEnd; a += aStep, b += bStep) {
+        As[ty][tx] = A_shared[ty][tx];
+        Bs[ty][tx] = B_shared[ty][tx];
+
+        __syncthreads();
+
+        A_shared[ty][tx] = A[a + width * ty + tx];
+        B_shared[ty][tx] = B[b + width * ty + tx];
+
+#pragma unroll
         for (int k = 0; k < BLOCK_SIZE; ++k) {
             Csub += As[ty][k] * Bs[k][tx];
         }
 
         __syncthreads();
     }
-    
-    int c = wB * BLOCK_SIZE * by + BLOCK_SIZE * bx;
-    C[c + wB * ty + tx] = Csub;    
+
+    int c = width * BLOCK_SIZE * by + BLOCK_SIZE * bx;
+    C[c + width * ty + tx] = Csub;
 }
 \end{lstlisting}
 
-Powyższa funkcja jest zmodyfikowaną wersją poprzedniej. Jej zadaniem jest również wykorzystanie pamięci współdzielonej bloku wątków. Różnica polega na dodatkowej funkcjonalności, którą jest zrównoleglenie obliczeń i transferu danych pomiędzy CPU i GPU.
+Powyższa funkcja jest zmodyfikowaną wersją poprzedniej. Jej zadaniem jest również wykorzystanie pamięci współdzielonej bloku wątków do wygenerowania częściowego wyniku macierzy $C$. Różnica polega na dodatkowej funkcjonalności, którą jest zrównoleglenie obliczeń i transfer danych pomiędzy CPU i GPU.
+
+W linii 58. i 59. deklarujemy dodatkowe pamięci współdzielone dla macierzy $A$ i $B$, do których równolegle z obliczeniami wpisujemy dane kolejnych bloków. Przed wykonaniem każdej iteracji pętli do tych pamięci zapisywane są dane z macierzy (w 70. i 71. wierszu). Tą czynność należy wykonać również przed pierwszą iteracją (61. i 62. linia). Oznacza to, że wątki po pobraniu danych do pamięci współdzielonej nie muszą się synchronizować, ponieważ w danej iteracji nie pobierają danych wykorzystywanych od razu do obliczeń, tak jak to było w poprzednim algorytmie. W tym przypadku dane pobierane do pamięci współdzielonej z macierzy będą wykorzystywane dopiero w kolejnej iteracji, w następnym fragmencie.
+
+\subsection{Analiza dostępu do pamięci}
+
+\subsubsection{Dostęp do pamięci dla 3. wersji kodu}
+
+Dostęp do danych odbywa się za pomocą pamięci współdzielonej co sprawia, że jeden wątek nie musi sam pobierać wszystkich danych z macierzy, a może do tego wykorzystać dane pobrane przez inne wątki. Takie podejście jest zdecydowanie szybsze niż wykorzystywanie tylko i wyłącznie pamięci globalnej, jednak sprawia, że wymagana jest synchronizacja po pobieraniu danych z macierzy. Wymagana jest również synchronizacja na końcu każdej iteracji, aby zapobiec podmienieniu zawartości pamięci współdzielonej, kiedy inny wątek nie zdążył wykonać jeszcze wszystkich obliczeń.
+
+\subsubsection{Dostęp do pamięci dla 5. wersji kodu}
+
+W tym przypadku dostęp odbywa się w trochę inny sposób. Dane z pemięci globalnej są pobierane przed iteracją, w której te dane zostaną użyte i zostają one zapisane do innego obszaru pamięci współdzielonej. Po tej operacji nie jest wymagana synchronizacja, gdyż ta pamięć nie jest wykorzystywana do obliczeń. We właściwej iteracji, która te dane potrzebuje, dane są przepisywane do nowego obszaru pamięci już bez bezpośredniego dostępu do pamięci globalnej. Ten obszar będzie już użyty do obliczeń, dokładnie tak jak w 1. funkcji, zatem synchronizacja po przepisaniu tych danych jest wymagana, tak jak ta na koniec każdej iteracji pętli zewnętrznej.
+
+\subsection{Analiza dostępu do danych}
+
+\subsubsection{Dostęp do danych dla 3. wersji kodu}
+
+W celu uzyskania wyniku dla częściowego każdy wątek musi w każdej iteracji pętli zewnętrznej pobrać po 1 elemencie z macierzy $A$ i $B$. To, którym elementem macierzy $C$ zajmuje się konkretny wątek, zależne jest od położenia bloku i wątku wewnątrz tego bloku.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{./images/6/lokIn1.png}
-	\caption{Zasoby wykorzystywane w pętli w 17. wierszu}
-	\label{fig:6inner1}
+	\includegraphics[width=\linewidth]{./images/3/1.png}
+	\caption{Bezpośredni dostęp do danych w jednym wątku}
+	\label{fig:image1}
+\end{figure}
+
+W każdej iteracji pętli zewnętrznej wątek musi pobrać dane z innego fragmentu macierzy. Wewnątrz każdego z tych fragmentów położenie pobieranego elementu jest stałe i odpowiada położeniu wątku wewnątrz bloku wątków. Powyższy rysunek przedstawia, które elementy musi pobrać wątek z macierzy $A$ i $B$ dla wyznaczenia przykładowego elementu macierzy $C$.
+
+Oczywiście pobrane wartości nie są wykorzystywane w tej funkcji bezpośrednio. Nie jest ich też wystarczająco tyle, aby móc od razu wyznaczyć wynik cząstkowy. Należy się posłużyć elementami wyznaczonymi w pamięci współdzielonej bloku wątków. Cały blok wątków będzie w stanie odczytać elementy wszystkich fragmentów w w wierszu fragmentów macierzy $A$ i kolumnie fragmentów macierzy $B$. W każdej iteracji pamięć współdzielona przechowuje informacje o wartościach z całego jednego fragmentu dla macierzy $A$ i $B$. 
+
+Wiemy, że do wyznaczenia jednego elementu macierzy $C$ potrzebujemy sumy iloczynów odpowiadających elementów w tym samym wierszu macierzy $A$ i kolumnie macierzy $B$, zatem otrzymane wartości po przebiegu całej pętli zewnętrznej pozwolą na wyznaczenie wartości dla całego fragmentu macierzy $C$, którym blok wątków się zajmuje.
+
+\subsubsection{Dostęp do danych dla 5. wersji kodu}
+
+Dla 2. funkcji dostęp do danych odbywa się w przybliżony sposób. Zmienia się miejsce, gdzie te dane są przetrzymywane w pamięci współdzielonej, oraz moment w którym te dane są pobierane (przed iteracją pętli zewnętrznej).
+
+\section{Wyniki przeprowadzonych eksperymentów}
+
+\subsection{Czas przetwarzania}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{./images/graphs/time/graph1.png}
+	\caption{Czas przetwarzania dla bloku o rozmiarze 8x8}
+	\label{fig:grapht1}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{./images/6/lokIn2.png}
-	\caption{Zasoby wykorzystywane w pętli w 16. wierszu}
-	\label{fig:6inner2}
+	\includegraphics[width=\linewidth]{./images/graphs/time/graph2.png}
+	\caption{Czas przetwarzania dla bloku o rozmiarze 16x16}
+	\label{fig:grapht2}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{./images/6/lokIn3.png}
-	\caption{Zasoby wykorzystywane w pętli w 15. wierszu}
-	\label{fig:6inner3}
+	\includegraphics[width=\linewidth]{./images/graphs/time/graph3.png}
+	\caption{Czas przetwarzania dla bloku o rozmiarze 32x32}
+	\label{fig:grapht3}
 \end{figure}
 
-Trzeci rysunek pokazuje, które dane są brane pod uwagę podczas wykonywania danej pętli. Uzyskujemy wiersz fragmentu macierzy $R$, którego wartości są iloczynem jednego elementu macierzy $A$ i wartości któregoś z wierszy odpowiadającego fragmentu w macierzy $B$. Uzyskane wartości nie są jednak wartościami ostatecznej macierzy wynikowej. Czwarty rysunek pokazuje, że kolejna pętla w dalszym ciągu oblicza wartości dla tych samych komórek macierzy $R$ poprzez sumowanie iloczynów elementów leżących w jednym wierszu fragmentu macierzy $A$ i wszystkich komórek fragmentu macierzy $B$. Najbardziej zewnętrzna pętla uzyskuje już wartości dla całego fragmentu i, jak pokazuje piąty rysunek, potrzeba do tego wszystkich wartości w odpowiadających fragmentach macierzy $A$ i $B$. Otrzymane wartości również nie są wartościami ostatecznymi. Dopiero kolejna pętla sprawi, że otrzymamy wartości fragmentu macierzy wynikowej $R$.
+Jak widać na powyższych wykresach czas przetwarzania dla obydwu metod jest podobny. Różnice są niemal niezauważalne z niewielką przewagą dla algorytmu w wersji 3. Zwiększenie rozmiaru bolku przyspiesza przetwarzanie, jednak jest to dużo bardziej zauważalne między blokiem o rozmiarze 8 i 16, niż 16 i 32 gdzie zmiana jest nieznaczna. Zgodnie z oczekiwaniami macierz o większym rozmiarze jest liczona dłużej. Różnica między macierzą o wymiarach 64x64 i 128x128 jest niewielka, co pokazuje niepełne wykorzystanie możliwości multiprocesora przy zbyt małej instancji. Dopiero przy przetwarzaniu macierzy o rozmiarze 256x256 można zauważyć znaczące zwiększenie czasu przetwarzania.
+
+\subsection{Prędkość przetwarzania}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{./images/6/lokMed.png}
-	\caption{Zasoby wykorzystywane w pętli w 14. wierszu}
-	\label{fig:6medium}
+	\includegraphics[width=\linewidth]{./images/graphs/fast/graph1.png}
+	\caption{Czas przetwarzania dla bloku o rozmiarze 8x8}
+	\label{fig:graphf1}
 \end{figure}
-
-Jak widać w powyższym rysunku, ta pętla wykorzystuje już całe wiersze i kolumny macierzy $A$ i $B$. W tej pętli odbywa się zsumowanie wartości odpowiadających elementów różnych fragmentów funkcji, które są pokrywane przez te wiersze i kolumny. W efekcie otrzymamy wartości, które złożą się w ostatecznym rozrachunku na całą macierz wynikową R.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{./images/6/lokOut1.png}
-	\caption{Zasoby wykorzystywane w pętli w 13. wierszu}
-	\label{fig:6outer1}
+	\includegraphics[width=\linewidth]{./images/graphs/fast/graph2.png}
+	\caption{Czas przetwarzania dla bloku o rozmiarze 16x16}
+	\label{fig:graphf2}
 \end{figure}
-
-Ostatnie dwie pętle odpowiadają za wybór fragmentu, którego elementy zostaną w następnych pętlach obliczone. Powyższy rysunek przedstawia wykorzystanie danych w tej wewnętrznej. Jak widać potrzebuje ona $r$ wierszy i wszystkich elementów macierzy $B$. Zewnętrzna będzie już potrzebowała całych macierzy $A$ i $B$. Złożoność tego rozwiązania wynosi $O((\frac{n}{r})^3*r^3)=O(n^3)$.
-
-Dyrektywy OpenMP działają podobnie jak w pierwszej funkcji. Tutaj pomiędzy wątki równomiernie zostają rozdzielone kolejne iteracje pętli w 13. wierszu.
-
-\subsection{Analiza efektywności}
-\subsubsection{Podział pracy na wątki}
-
-W pierwszej funkcji wątek dokonuje obliczeń dla pojedynczej kolumny macierzy wynikowej $R$ co odpowiada sytuacji na rysunku 2. Wykorzystuje do tego jedną kolumnę macierzy $B$ i całą macierz~$A$. Dla drugiej funkcji zrównoleglenie odbywa się dla pętli w 13. wierszu, a więc wątki dokonują obliczeń dla mniejszego fragmentu macierzy wynikowej $R$ o rozmiarze $r x r$, gdzie $r$ jest argumentem funkcji. Dane wykorzystywane przez jeden wątek dla tej funkcji przedstawia rysunek 6.
-
-\subsubsection{False sharing}
-
-W pierwszej funkcji do wyliczenia fragmentu macierzy $R$, za który dany wątek jest odpowiedzialny, potrzebuje on dostępu do kolumny macierzy $B$, której żaden inny wątek nie będzie potrzebował. Niestety nie dotyczy to dostępu do macierzy $A$. Tutaj każdy wiersz będzie musiał być udostępniony do wszystkich wątków, zatem może dojść do sytuacji, kiedy wątki uzyskają równoczesny dostęp do danych znajdujących się blisko siebie w pamięci podręcznej i do ich unieważnienia przez inne wątki. Prowadzi to do konieczności ponownego pobrania danych co finalnie spowolni obliczenia.
-
-W drugiej funkcji false sharing również może zajść. Wątki będą zmuszone do obliczania tych samych fragmentów macierzy, co inne wątki, aby je zsumować i otrzymać ostateczne wartości fragmentu macierzy $R$, za który dany wątek jest odpowiedzialny. W tej sytuacji jednak wątki będą korzystać w danej chwili z krótszych wierszy o długości $r$, dzięki czemu unieważniane będą znacznie mniejsze fragmenty pamięci podręcznej. W porównaniu z pierwszą funkcją, w której może dojść do unieważniania całych wierszy, w tym przypadku nie powinno to wpłynąć w tak dużym stopniu na czas. 
-
-\subsubsection{Analiza lokalności dostępu do danych}
-
-Rozróżniamy dwa rodzaje lokalności -- czasową i przestrzenną. Pierwsza oznacza wielokrotne odwoływanie się wątków do tych samych danych przetrzymywanych w pamięci podręcznej. Do jej wystąpienia wymagane jest odpowiednio duży rozmiar pamięci podręcznej, która musi być większa od rozmiaru pamięci potrzebnej do wykonania danej operacji i będzie tak dla wszystkich analizowanych poniżej przypadków. Lokalność przestrzenna polega na dostępie do danych występujących jeden po drugim w pobranej linii pamięci czyli w jednym wierszu macierzy.
-
-\paragraph{Lokalność dla pierwszej funkcji}
-
-\begin{itemize}
-
-\item Dla pętli wewnętrznej
-
-Zużycie danych przedstawia rysunek 1. Dla macierzy $R$ mamy lokalność odwołań, gdyż jeden wątek w każdej iteracji tej pętli odwołuje się do tej samej komórki macierzy $R$. Dla macierzy $A$ uzyskamy natomiast lokalność przestrzenną.
-
-\item Dla pętli środkowej
-
-Wykorzystanie danych przez jeden wątek w tej sytuacji przedstawia rysunek 2. 
-
-Wątek w danej iteracji tej pętli jest odpowiedzialny za jedną kolumnę macierzy $R$. Taka sytuacja jest przedstawiona na drugim rysunku. Potrzebna jest cała macierz $A$ i jedna kolumna macierzy $B$. Do otrzymania jednej komórki dla wynikowej kolumny będzie potrzebny jeden wiersz macierzy $A$, wykorzystujemy więc całe linie pamięci. Mamy zatem do czynienia z lokalnością przestrzenną. Lokalność czasowa zależy od dostępnej pamięci podręcznej.
-
-\end{itemize}
-
-\paragraph{Lokalność dla drugiej funkcji}
-
-\begin{itemize}
-
-\item Dla pierwszej pętli wewnętrznej - wiersz 17.
-
-Zużycie danych przedstawia rysunek 3. Ze względu na niewielką ilość przetwarzanych komórek przy odpowiednio małym $r$ wystąpi tutaj lokalność czasowa. Dla macierzy $R$ i $B$ mamy lokalność przestrzenną, natomiast dla macierzy $A$ będziemy mieli lokalność odwołań, bo odwołujemy się cały czas do jednej komórki.
-
-\item Dla drugiej pętli wewnętrznej - wiersz 16.
-
-Sytuacja bardzo zbliżona do tej powyższej. Przedstawia ją kolejny rysunek nr 4. Lokalność przestrzenna wystąpi tutaj dla wszystkich macierzy, lokalność czasowa jest też bardzo prawdopodobna i zależy od $r$.
-
-\item Dla trzeciej pętli wewnętrznej - wiersz 15.
-
-Wykorzystanie danych przedstawione na rysunku 5. Tak samo jak w powyższych przypadkach, mamy tutaj do czynienia z lokalnością przestrzenną i czasową, jeśli oczywiście wartość $r$ jest odpowiednio mała.
-
-\end{itemize}
-
-Dla bardziej zewnętrznych pętli lokalność, szczególnie przestrzenna może być trudna do uzyskania, jednak samo występowanie lokalności dla 3 wewnętrznych pętli może zapewnić dużą lokalność dostępu do danych dla całego algorytmu i może skutkować krótszym przetwarzaniem danych dzięki większej skuteczności trafień danych w pamięci podręcznej. Same wielkości macierzy nie powinny mieć tu dużego wpływu na uzyskanie lokalności. Rolę tutaj odgrywa wielkość $r$, która musi być na tyle mała aby pamięć podręczna zmieściła 3 fragmenty macierzy $R$, $A$ i $B$ o rozmiarach $r$ x $r$.
-
-Jeśli wielkość rozpatrywanego fragmentu macierzy w drugiej funkcji wynosi $r$, a wielkość pamięci podręcznej cache $M$, to zależność między tymi wartościami przedstawia się następująco:
-\[ 3*r*r*6 \leq M \Longleftrightarrow r \leq \sqrt{M/3}/6\]
-Dzielenie przez 6 wynika z ilości jednocześnie uruchomionych wątków. Aby zadbać o jak najszybsze przetwarzanie powinniśmy zadbać, aby stosowane zmienne nie przekroczyły wielkości pamięci L3, która ma wielkość 8 MB. Przekroczenie pojemności tej pamięci powoduje znaczne spowolnienie działania algorytmu. Zmiennych typu float (rozmiar 4B) na których przeprowadzane są obliczenia, możemy przechować: 
-\[ M = 8MB/4B = 2 * 1024 * 1024 = 2097152 \]
-Wartość $r$ wynosi zatem:
-\[ r \leq \sqrt{2097152 / 3}/6 \]
-\[ r \leq \sqrt{699050,67}/6 \]
-\[ r \leq 836,09/6 \]
-\[ r \leq 139,35 \]
-Największa optymalna wartość $r$ dla rozważanej pamięci cache, która pozwoli na zachowanie dużej lokalności drugiego algorytmu wynosi wobec tego $139$.
-
-\section{Analiza przetwarzania}
-\subsection{Przebieg}
-
-Dla danego problemu istnieje instancja graniczna, ze względu na ograniczoną pojemność pamięci podręcznej L3. Tak jak już rozważaliśmy przy analizie lokalności, dla pamięci L3 możemy przechowywać $2097152$ zmiennych typu float. Pamięć L3 jest współdzielona przez wszystkie rdzenie procesora, więc dane które nie mieszczą się w L3, muszą zostać przeniesione do pamięci RAM, co powoduje zwiększenie czasu przetwarzania.
-
-W wersji algorytmu 3 pętlowej, każdy wątek musi załadować do pamięci kolumnę macierzy wynikowej $R$, całą macierz $A$ oraz kolumnę macierzy $B$.
-Należy zatem posłużyć się wzorem:
-\[ n_R + n_A^2 + n_B < 2097152 \]
-Wynikiem jest:
-\[ n_R = n_A = n_B = 1447\]
-Eksperyment zostanie przeprowadzony na trzech rozmiarach instancji: 1400, 1500 oraz 1600.
-
-
-\subsection{Wyniki}
-\subsubsection{Instruction per Cycle}
-Instruction per Cycle, czyli w skrócie IPC, jest to stosunek wykonanych istrukcji i liczby cykli zegara, im większa jest to wartość, tym więcej wykonujemy instrukcji na cykl, a więc wykorzystanie procesora jest lepsze.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{./images/wykresy/IPC.png}
-	\caption{Instruction per Cycle}
-	\label{fig:wykres1}
+	\includegraphics[width=\linewidth]{./images/graphs/fast/graph3.png}
+	\caption{Czas przetwarzania dla bloku o rozmiarze 32x32}
+	\label{fig:graphf3}
 \end{figure}
 
-\subsubsection{Data cache miss ratio}
-Data cache miss ratio jest to stosunek nietrafień do pamięci podręcznej i wszystkich dostępów zrealizowanych. Im mniejszy jest ten wynik, tym rzadziej trzeba odwoływać się dalej, niż do pamięci podręcznej. 
+Prędkość przetwarzania dla bloków o rozmiarach 32 i 16 jest bardzo podobna, co oznacza, że w obydwu przypadkach multiprocesor był wykorzystywany najlepiej jak można. W wersji z blokiem o rozmiarze 8, prędkość przetwarzania jest znacząco niższa, prawdopodobnie blok był zbyt mały by zająć cały multiprocesor ze względu na ogrniczenie na ilość bloków. Najniższe prędkośći przetwarzania można zaobserwować w przypadku najmniejszej instancji problemu. Dla zbyt małej ilości danych przetwarzanie na karcie graficznej działa gorzej.
+
+\subsubsection{Stopień łączenia dostępów}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{./images/wykresy/miss_ratio.png}
-	\caption{Data cache miss ratio}
-	\label{fig:wykres2}
+	\includegraphics[width=\linewidth]{./images/graphs/dostepy/graph1.png}
+	\caption{Stopień łączenia dostępów do pamięci dla bloku o rozmiarze 8x8}
+	\label{fig:graphd1}
 \end{figure}
-
-\subsubsection{Data cache miss rate}
-Data cache miss rate jest stosunkiem nietrafień do pamięci podręcznej i wykonanych instrukcji. Im większa jest ta wartość, tym wolniej realizowane jest przetwarzanie.  
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{./images/wykresy/miss_rate.png}
-	\caption{Data Cache miss rate}
-	\label{fig:wykres3}
+	\includegraphics[width=\linewidth]{./images/graphs/dostepy/graph2.png}
+	\caption{Stopień łączenia dostępów do pamięci dla bloku o rozmiarze 16x16}
+	\label{fig:graphd2}
 \end{figure}
-
-\subsection{Analiza przyspieszenia}
-
-Algorytmy równoległe, zarówno trójpętlowe, jak i  sześciopętlowe, zostały porównane pod względem czasu przetwarzania z algorytmem sekwencyjnym. Wykres przedstawia iloraz czasu przetwarzania najlepszej znanej metody sekwencyjnej i czasu obliczeń równoległych.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{./images/wykresy/analiza_przyspieszenia.png}
-	\caption{Analiza przyspieszenia}
-	\label{fig:wykres4}
+	\includegraphics[width=\linewidth]{./images/graphs/dostepy/graph3.png}
+	\caption{Stopień łączenia dostępów do pamięci dla bloku o rozmiarze 32x32}
+	\label{fig:graphd3}
 \end{figure}
 
-Wykres pokazuje, że realizacja równoległa za pomocą metody 3 pętlowej wypada zdecydowanie gorzej niż metoda sekwencyjna. Kolejność JIK mnożenia macierzy wypada wyjątkowo słabo. Spowodowane to jest słabą lokalnością przestrzenną danych, iteracje używają całych kolumn, które wymagają sprowadzania całych wierszy z pamięci. Z tego powodu często pojawiają się nietrafienia do pamięci podręcznej z powodu jej ograniczonej pojemności. Przetwarzanie za pomocą kolumn sprawia, że pojawia się problem false sharingu, który dodatkowo niekorzystnie wpływa na czas przetwarzania.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{./images/tables/table1.png}
+	\caption{Wyniki obliczeń stopienia łączenia dostępów do pamięci}
+	\label{fig:table1}
+\end{figure}
 
-Wersja sześciopętlowa ijk, iikkjj, osiąga nawet 6 krotnie przyspieszenie względem wersji sekwencyjnej. Im większa instancja tym większa korzyść wynika z użycia algorytmu dzielącego macierz na podmacierze. Mniej danych trzeba jednocześnie sprowadzać do pamięci współdzielonej, więc nie następuje przepełnienie jej. Z tego powodu nie trzeba odwoływać się do wolniejszych pamięci i całe przetwarzanie realizowane jest szybciej. 
+Stopień łączenia dostępów do pamięci wynosi:
 
-\section{Wnioski}
-Nieodpowiedni dobór algorytmu równoległego do zadania nie tylko powoduje nie uzyskanie przyspieszenia przetwarzania, ale także może spowodować znaczne spowolnienie względem wersji sekwencyjnej. Przed zastosowaniem algorytmu równoległego, należy przeprowadzić dogłębną analizę sposobu przetwarzania danych przez algorytm, aby wybrać jego optymalną implementację.
+\[
+\frac{global\ load + global\ store}{global\ load\ transactions + global\ store\ transactions}
+\]
+
+Stopień łączenia dostępów do pamięci oznacza jak często potrzebujemy jednocześnie danych zawartych w jednej linii. Takie zapytania do pamięci można łączyć w transakcję i dzięki temu ograniczyć liczbę odwołań do wolnej pamięci. Wraz ze wzrostem rozmiaru macierzy liczba łączonych dostępów maleje. Wzrasta co prawda liczba wykonanych transakcji, jednak nieproporcjonalnie do wzrastającej liczby wszystkich odwołań. Zwiększenie rozmiaru bloku nieznacznie poprawia sytuację, ze względu na miejszą liczbę wątków.
+
+\subsection{Zajętość multiprocesora}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{./images/graphs/zajetosc/graph1.png}
+	\caption{Zajętość multiprocesora dla bloku o rozmiarze 8x8}
+	\label{fig:graphz1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{./images/graphs/zajetosc/graph2.png}
+	\caption{Zajętość multiprocesora dla bloku o rozmiarze 16x16}
+	\label{fig:graphz2}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{./images/graphs/zajetosc/graph3.png}
+	\caption{Zajętość multiprocesora dla bloku o rozmiarze 32x32}
+	\label{fig:graphz3}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{./images/tables/table2.png}
+	\caption{Wyniki odczytu zajętości multiprocesora}
+	\label{fig:table2}
+\end{figure}
+
+Zajętość multiprocesora odczytujemy z wartości Achieved Occupancy z programu Nvidia visual profiler. Oznacza ona stosunek aktywnych wiązek do maksymalnej liczby wiązek w SM. Jak widać na powyższych wykresach zgodnie z przewidywaniami dla macierzy o rozmiarze 64x64 mamy zbyt mało wiązek by móc w pełni wykorzystać możliwości multiprocesora. Dopiero rozmiar 128x128 i 256x256 daje wartości bliskie 1, czyli maksymalnej możliwej zajętości. Zwiększenie rozmiaru bloku również nieznacznie poprawia tę wartość.
+
+\subsection{Współczynnik poziomu rozbieżności przetwarzania}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{./images/tables/table3.png}
+	\caption{Wyniki odczytu współczynnika rozbieżności przetwarzania}
+	\label{fig:table3}
+\end{figure}
+
+Współczynnik poziomu rozbieżności przetwarzania wynosi:
+
+\[
+\frac{branch - divergent\ branch}{branch}
+\]
+
+Współczynnik poziomu rozbieżności przetwarzania wiązek w kodzie to liczba gałęzi rozbierznych które powstają w kodzie przy instrukcjach warunkowych. Wówczas wiązka musi przetwarzać różne wersje kodu co bardzo źle wpływa na efektywność przetwarzania. Jeżeli wszystkie wątki wybiorą tę samą wersję rozwiazania instrukcji warunkowej, to nie będzie gałęzi rozbierznych. Obie wersje kodu które testujemy nie posiadają instrukcji warunkowych, dlatego zgodnie z oczekiwaniami wartość ta, jest zawsze równa 1.
+
+\section{Wnioski końcowe}
+Zrównoleglenie obliczeń nie wpłynęło w pozytywnie na działanie algorytmu.
+
 \end{document}
